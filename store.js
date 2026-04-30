@@ -7,9 +7,9 @@ import {
 
 const CourtConnectStoreKey = Symbol("CourtConnectStore");
 
-const profileChannel = "sidmdesignftw-v2";
-const chatDirectoryChannel = "sidmdesignftw-v2-chats";
-const lobbyChannel = "sidmdesignftw-v2-match-lobby";
+const profileChannel = "sidmdesignftw-v3";
+const chatDirectoryChannel = "sidmdesignftw-v3-chats";
+const lobbyChannel = "sidmdesignftw-v3-match-lobby";
 const MAX_NAME_LENGTH = 15;
 
 const emptyProfileForm = () => ({
@@ -107,11 +107,11 @@ function isWithinOptionalRange(value, min, max) {
 }
 
 function dmChannel(actorA, actorB) {
-  return "sidmdesignftw-v2-dm-" + [actorA, actorB].sort().join("-");
+  return "sidmdesignftw-v3-dm-" + [actorA, actorB].sort().join("-");
 }
 
 function matchChatChannel(matchId) {
-  return `sidmdesignftw-v2-match-chat-${matchId}`;
+  return `sidmdesignftw-v3-match-chat-${matchId}`;
 }
 
 function buildProfileValue(form, icon) {
