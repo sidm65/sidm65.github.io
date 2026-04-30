@@ -1,0 +1,55 @@
+<section v-if="!store.profileReady.value" class="card page narrow">
+    <h2>Finish your profile first</h2>
+    <p class="page-copy">Save your profile before sending direct messages.</p>
+    <router-link class="button-link" to="/profile">Go to profile</router-link>
+</section>
+
+<section v-else-if="store.profilesLoading.value || store.openingChatFor.value === routeActor" class="card page narrow">
+    <h2>Opening chat</h2>
+    <p class="page-copy">Loading the conversation.</p>
+</section>
+
+<section v-else-if="isInvalidRoute" class="card page narrow">
+    <h2>Chat not found</h2>
+    <p class="page-copy">Choose a valid player from the chat list.</p>
+    <router-link class="button-link" to="/chats">Back to chats</router-link>
+</section>
+
+<section v-else class="card page">
+    <div class="chat-head">
+        <div class="profile">
+            <div v-if="routePerson.value.icon" class="profile-photo">
+                <graffiti-get-media
+                    :url="routePerson.value.icon"
+                    :accept="{ types: ['image/*'] }"
+                ></graffiti-get-media>
+            </div>
+            <div v-else class="avatar">{{ store.clipName(routePerson.value.name).slice(0, 1).toUpperCase() }}</div>
+            <div>
+                <h2>Chat with {{ store.clipName(routePerson.value.name) }}</h2>
+                <p>Sports: {{ routePerson.value.sports.join(", ") }}</p>
+            </div>
+        </div>
+        <div class="route-actions">
+            <router-link class="button-link secondary-link" :to="`/profile/${routeActor}`">View profile</router-link>
+            <router-link class="button-link secondary-link" to="/chats">All chats</router-link>
+        </div>
+    </div>
+    <p v-if="store.messagesLoading.value"><em>Loading messages...</em></p>
+    <ul v-else class="messages">
+        <message-bubble
+            v-for="message in store.sortedMessages.value"
+            :key="message.url"
+            :message="message"
+            :mine="message.mine"
+            :sender-name="store.profileNames.value[message.actor] || 'Player'"
+        ></message-bubble>
+    </ul>
+    <p v-if="!store.messagesLoading.value && !store.sortedMessages.value.length && store.chatReady.value" class="empty">No messages yet.</p>
+    <form class="composer" @submit.prevent="store.sendMessage()">
+        <input v-model.trim="store.messageText.value" type="text" placeholder="Type a message" />
+        <button :disabled="!store.messageText.value || store.sendingMessage.value || !store.chatReady.value">
+            {{ store.sendingMessage.value ? "Sending..." : "Send" }}
+        </button>
+    </form>
+</section>

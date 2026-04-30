@@ -8,7 +8,7 @@
             {
                 "imports": {
                     "vue": "https://cdn.jsdelivr.net/npm/vue@3.5.32/dist/vue.esm-browser.js",
-                    "@graffiti-garden/implementation-local": "https://cdn.jsdelivr.net/npm/@graffiti-garden/implementation-local@1.2.0/dist/browser/index.js",
+                    "vue-router": "https://cdn.jsdelivr.net/npm/vue-router@5.0.4/dist/vue-router.esm-browser.prod.js",
                     "@graffiti-garden/implementation-decentralized": "https://cdn.jsdelivr.net/npm/@graffiti-garden/implementation-decentralized@0.0.9/dist/browser/index.js",
                     "@graffiti-garden/wrapper-vue": "https://cdn.jsdelivr.net/npm/@graffiti-garden/wrapper-vue@1.2.2/dist/browser/plugin.mjs"
                 }
@@ -23,214 +23,21 @@
             <div class="app">
                 <header>
                     <div class="hero">
-                        <h1>Court Connect</h1>
+                        <h1><router-link to="/">Court Connect</router-link></h1>
                         <p>Plan Pickleball and tennis meetups!</p>
                     </div>
+                    <nav v-if="session" class="nav">
+                        <router-link to="/profile" class="nav-link">Profile</router-link>
+                        <router-link to="/matches" class="nav-link">Matches</router-link>
+                        <router-link to="/chats" class="nav-link">Chats</router-link>
+                    </nav>
                     <div class="actions">
-                        <button :class="{ active: view === 'chats' }" :disabled="!appReady" @click="view = 'chats'">Chats</button>
-                        <button :class="{ active: view === 'lobby' }" :disabled="!appReady" @click="view = 'lobby'">Match Lobby</button>
-                        <button v-if="!$graffitiSession.value" @click="$graffiti.login()">Log In</button>
-                        <button v-else @click="$graffiti.logout($graffitiSession.value)">Log Out</button>
+                        <button v-if="session === null" @click="logIn()">Log In</button>
+                        <button v-else-if="session" @click="logOut()">Log Out</button>
                     </div>
                 </header>
-
-                <main v-if="$graffitiSession.value" class="layout">
-                    <aside>
-                        <section class="card">
-                            <h2>Your Profile</h2>
-                            <form @submit.prevent="saveProfile">
-                                <label class="field">
-                                    <span>Name</span>
-                                    <input v-model.trim="profileForm.name" type="text" placeholder="Your name" />
-                                </label>
-                                <div class="choice-group">
-                                    <span>Sports</span>
-                                    <label><input v-model="profileForm.sports" type="checkbox" value="tennis" /> Tennis</label>
-                                    <label><input v-model="profileForm.sports" type="checkbox" value="pickleball" /> Pickleball</label>
-                                </div>
-                                <button :disabled="!canSaveProfile || savingProfile">
-                                    {{ savingProfile ? "Saving..." : "Save Profile" }}
-                                </button>
-                                <p class="empty" v-if="duplicateName">That nickname is already taken.</p>
-                                <p class="empty" v-else-if="profileError">{{ profileError }}</p>
-                                <p class="note" v-if="profileReady">Profile saved. You can use the app now.</p>
-                                <p class="note" v-else>Save your profile before chatting or posting matches.</p>
-                            </form>
-                        </section>
-
-                        <section v-if="view === 'chats' && appReady" class="card">
-                            <h2>Players</h2>
-                            <p v-if="profilesLoading"><em>Loading players...</em></p>
-                            <p v-else-if="!people.length" class="empty">No other players yet.</p>
-                            <ul v-else class="list">
-                                <li v-for="person in people" :key="person.actor">
-                                    <button class="item" :class="{ selected: selectedActor === person.actor }" :disabled="openingChatFor === person.actor" @click="selectPerson(person.actor)">
-                                        <span class="avatar small">{{ person.value.name.slice(0, 1).toUpperCase() }}</span>
-                                        <span class="item-text">
-                                            <strong>{{ person.value.name }}</strong>
-                                            <span>{{ openingChatFor === person.actor ? "Opening chat..." : person.value.sports.join(", ") }}</span>
-                                        </span>
-                                    </button>
-                                </li>
-                            </ul>
-                        </section>
-
-                        <section v-else-if="appReady" class="card">
-                            <h2>Post Match</h2>
-                            <form @submit.prevent="postMatch">
-                                <label class="field">
-                                    <span>Sport</span>
-                                    <select v-model="matchForm.sport">
-                                        <option value="tennis">Tennis</option>
-                                        <option value="pickleball">Pickleball</option>
-                                    </select>
-                                </label>
-                                <label class="field">
-                                    <span>Location</span>
-                                    <select v-model="matchForm.location">
-                                        <option value="MIT">MIT</option>
-                                        <option value="Harvard">Harvard</option>
-                                    </select>
-                                </label>
-                                <div class="split">
-                                    <label class="field">
-                                        <span>Rating Type</span>
-                                        <select v-model="matchForm.ratingType">
-                                            <option value="UTR">UTR</option>
-                                            <option value="UTR-P">UTR-P</option>
-                                        </select>
-                                    </label>
-                                    <label class="field">
-                                        <span>Rating (1-16)</span>
-                                        <input v-model.number="matchForm.rating" type="number" min="1" max="16" step="0.1" placeholder="6.5" />
-                                    </label>
-                                </div>
-                                <label class="field">
-                                    <span>Format</span>
-                                    <select v-model="matchForm.format">
-                                        <option value="singles">Singles</option>
-                                        <option value="doubles">Doubles</option>
-                                    </select>
-                                </label>
-                                <div class="split">
-                                    <label class="field">
-                                        <span>Date</span>
-                                        <input v-model="matchForm.date" type="date" />
-                                    </label>
-                                    <label class="field">
-                                        <span>Time</span>
-                                        <input v-model="matchForm.time" type="time" />
-                                    </label>
-                                </div>
-                                <label class="field">
-                                    <span>Cost Per Spot ($)</span>
-                                    <input v-model.number="matchForm.costPerSpot" type="number" min="0" step="1" placeholder="12" />
-                                </label>
-                                <button :disabled="!canPostMatch || postingMatch">
-                                    {{ postingMatch ? "Posting..." : "Post Match" }}
-                                </button>
-                            </form>
-                        </section>
-                    </aside>
-
-                    <section class="card content">
-                        <div v-if="!appReady" class="empty-panel">
-                            <h2>Finish your profile first</h2>
-                            <p>Choose your name and sports, then save your profile to unlock chats and the lobby.</p>
-                        </div>
-
-                        <div v-else-if="view === 'chats'">
-                            <div v-if="activePerson">
-                                <div class="chat-head">
-                                    <div class="profile">
-                                        <div class="avatar">{{ activePerson.value.name.slice(0, 1).toUpperCase() }}</div>
-                                        <div>
-                                            <h2>Chat with {{ activePerson.value.name }}</h2>
-                                            <p>{{ activePerson.value.sports.join(", ") }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p v-if="messagesLoading"><em>Loading messages...</em></p>
-                                <ul v-else class="messages">
-                                    <li v-for="message in sortedMessages" :key="message.url" :class="['bubble', message.mine ? 'mine' : 'theirs']">
-                                        <small>
-                                            <graffiti-actor-to-handle :actor="message.actor"></graffiti-actor-to-handle>
-                                        </small>
-                                        <span>{{ message.value.content }}</span>
-                                    </li>
-                                </ul>
-                                <p v-if="!messagesLoading && !sortedMessages.length && chatReady" class="empty">No messages yet.</p>
-                                <form class="composer" @submit.prevent="sendMessage">
-                                    <input v-model.trim="messageText" type="text" placeholder="Type a message" />
-                                    <button :disabled="!messageText || sendingMessage || !chatReady">
-                                        {{ sendingMessage ? "Sending..." : "Send" }}
-                                    </button>
-                                </form>
-                            </div>
-                            <div v-else class="empty-panel">
-                                <h2>Pick a player</h2>
-                                <p>Select someone from the left to start a direct message.</p>
-                            </div>
-                        </div>
-
-                        <div v-else>
-                            <div class="chat-head">
-                                <div>
-                                    <h2>Match Lobby</h2>
-                                    <p>Find a game near campus or post one of your own.</p>
-                                </div>
-                            </div>
-                            <p v-if="matchesLoading"><em>Loading matches...</em></p>
-                            <p v-else-if="!matchCards.length" class="empty">No matches posted yet.</p>
-                            <div v-else class="stack">
-                                <article v-for="match in matchCards" :key="match.url" class="match">
-                                    <div class="match-top">
-                                        <strong>{{ match.value.sport }} at {{ match.value.location }}</strong>
-                                        <span class="pill">{{ match.value.ratingType }} {{ match.value.rating }}</span>
-                                    </div>
-                                    <div class="meta">
-                                        <span>{{ match.value.format }}</span>
-                                        <span>{{ match.value.date }}</span>
-                                        <span>{{ match.value.time }}</span>
-                                    </div>
-                                    <p class="cost">Cost per spot: ${{ match.value.costPerSpot }}</p>
-                                    <div class="seats">
-                                        <button
-                                            v-for="(seat, index) in match.seats"
-                                            :key="index"
-                                            :class="{ filled: !seat.open }"
-                                            :disabled="!seat.open || match.full || match.joined || match.mine"
-                                            @click="pendingMatchId = match.value.matchId"
-                                        >
-                                            {{ seat.label }}
-                                        </button>
-                                    </div>
-                                    <p v-if="match.mine" class="status">Your match</p>
-                                    <p v-else-if="match.joined" class="status">Done</p>
-                                    <p v-else-if="match.full" class="status">Full</p>
-                                    <button
-                                        v-if="match.mine"
-                                        class="delete-btn"
-                                        @click="deleteMatch(match)"
-                                        :disabled="deletingMatchId === match.url"
-                                    >
-                                        {{ deletingMatchId === match.url ? "Deleting..." : "Delete Match" }}
-                                    </button>
-                                    <button
-                                        v-else-if="pendingMatchId === match.value.matchId && !match.mine"
-                                        @click="joinMatch(match)"
-                                        :disabled="joiningMatchId === match.value.matchId"
-                                    >
-                                        {{ joiningMatchId === match.value.matchId ? "Paying..." : "Pay $" + match.value.costPerSpot }}
-                                    </button>
-                                </article>
-                            </div>
-                        </div>
-                    </section>
-                </main>
-
-                <main v-else class="card">
-                    <p>Log in to create a profile, chat with other players, and join matches.</p>
+                <main>
+                    <router-view></router-view>
                 </main>
             </div>
         </template>

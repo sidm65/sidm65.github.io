@@ -1,0 +1,37 @@
+<section v-if="!store.profileReady.value" class="card page narrow">
+    <h2>Finish your profile first</h2>
+    <p class="page-copy">Save your profile before opening chats with other players.</p>
+    <router-link class="button-link" to="/profile">Go to profile</router-link>
+</section>
+
+<section v-else class="page-grid">
+    <section class="card page">
+        <div class="section-head">
+            <div>
+                <h2>Players</h2>
+                <p class="page-copy">Pick someone to start or continue a direct message.</p>
+            </div>
+        </div>
+        <p v-if="store.profilesLoading.value"><em>Loading players...</em></p>
+        <p v-else-if="!store.people.value.length" class="empty">No other players yet.</p>
+        <ul v-else class="list">
+            <li v-for="person in store.people.value" :key="person.actor">
+                <router-link class="item-link" :to="{ name: 'chat', params: { actor: person.actor } }">
+                    <span class="item">
+                        <span v-if="person.value.icon" class="profile-photo profile-photo-small">
+                            <graffiti-get-media
+                                :url="person.value.icon"
+                                :accept="{ types: ['image/*'] }"
+                            ></graffiti-get-media>
+                        </span>
+                        <span v-else class="avatar small">{{ store.clipName(person.value.name).slice(0, 1).toUpperCase() }}</span>
+                        <span class="item-text">
+                            <strong>{{ store.clipName(person.value.name) }}</strong>
+                            <span>Sports: {{ person.value.sports.join(", ") }}</span>
+                        </span>
+                    </span>
+                </router-link>
+            </li>
+        </ul>
+    </section>
+</section>

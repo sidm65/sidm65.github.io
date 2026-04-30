@@ -1,0 +1,47 @@
+<section v-if="store.profilesLoading.value" class="card page narrow">
+    <h2>Loading profile</h2>
+    <p class="page-copy">Fetching the latest player details.</p>
+</section>
+
+<section v-else-if="!profile" class="card page narrow">
+    <h2>Profile not found</h2>
+    <p class="page-copy">This player does not have a saved profile yet.</p>
+</section>
+
+<section v-else class="card page profile-view-card">
+    <div class="profile-view-head">
+        <div class="profile-view-identity">
+            <div v-if="profile.value.icon" class="profile-photo">
+                <graffiti-get-media
+                    :url="profile.value.icon"
+                    :accept="{ types: ['image/*'] }"
+                ></graffiti-get-media>
+            </div>
+            <div v-else class="avatar profile-avatar-large">
+                {{ store.clipName(profile.value.name).slice(0, 1).toUpperCase() }}
+            </div>
+            <div>
+                <h2>{{ store.clipName(profile.value.name) }}</h2>
+                <p class="page-copy">Sports: {{ profile.value.sports.join(", ") }}</p>
+            </div>
+        </div>
+        <router-link
+            v-if="actor === store.myActor.value"
+            class="button-link secondary-link"
+            to="/profile"
+        >
+            Edit profile
+        </router-link>
+    </div>
+
+    <div class="profile-stats">
+        <article class="stat-card">
+            <span class="stat-label">UTR</span>
+            <strong>{{ profile.value.utr ?? "Not shared" }}</strong>
+        </article>
+        <article class="stat-card">
+            <span class="stat-label">UTR-P</span>
+            <strong>{{ profile.value.utrp ?? "Not shared" }}</strong>
+        </article>
+    </div>
+</section>

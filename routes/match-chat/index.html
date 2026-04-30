@@ -1,0 +1,58 @@
+<section v-if="store.matchesLoading.value" class="card page narrow">
+    <h2>Loading match chat</h2>
+    <p class="page-copy">Fetching the latest match details.</p>
+</section>
+
+<section v-else-if="!match" class="card page narrow">
+    <h2>Match not found</h2>
+    <p class="page-copy">This match may have been deleted.</p>
+    <router-link class="button-link" to="/matches">Back to matches</router-link>
+</section>
+
+<section v-else-if="accessDenied" class="card page narrow">
+    <h2>Private chat</h2>
+    <p class="page-copy">Only the host and joined players can open this match chat.</p>
+    <router-link class="button-link" to="/matches">Back to matches</router-link>
+</section>
+
+<section v-else class="card page">
+    <div class="chat-head">
+        <div>
+            <h2>{{ match.value.sport }} at {{ match.value.location }}</h2>
+            <p>Hosted by <router-link class="inline-link" :to="match.profilePath">{{ match.hostName }}</router-link></p>
+        </div>
+        <router-link class="button-link secondary-link" to="/matches">Back to matches</router-link>
+    </div>
+
+    <div class="participant-row">
+        <span class="stat-label">Players</span>
+        <div class="participant-list">
+            <router-link
+                v-for="participant in match.participantNames"
+                :key="participant.actor"
+                class="participant-chip"
+                :to="`/profile/${participant.actor}`"
+            >
+                {{ participant.name }}
+            </router-link>
+        </div>
+    </div>
+
+    <p v-if="store.messagesLoading.value"><em>Loading messages...</em></p>
+    <ul v-else class="messages">
+        <message-bubble
+            v-for="message in store.sortedMessages.value"
+            :key="message.url"
+            :message="message"
+            :mine="message.mine"
+            :sender-name="store.profileNames.value[message.actor] || 'Player'"
+        ></message-bubble>
+    </ul>
+    <p v-if="!store.messagesLoading.value && !store.sortedMessages.value.length" class="empty">No messages yet. Start coordinating with the group.</p>
+    <form class="composer" @submit.prevent="store.sendMessage()">
+        <input v-model.trim="store.messageText.value" type="text" placeholder="Message the players in this match" />
+        <button :disabled="!store.messageText.value || store.sendingMessage.value || !store.chatReady.value">
+            {{ store.sendingMessage.value ? "Sending..." : "Send" }}
+        </button>
+    </form>
+</section>

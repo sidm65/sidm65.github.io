@@ -1,0 +1,7 @@
+<section class="card page narrow">
+    <h2>Welcome to Court Connect</h2>
+    <p class="page-copy">Log in to create your profile, post matches, and message other players.</p>
+    <p v-if="store.session.value === undefined" class="empty">Loading session...</p>
+    <button v-else-if="store.session.value === null" @click="$graffiti.login()">Log In</button>
+    <p v-else class="note">You are already logged in. Redirecting to the match lobby.</p>
+</section>

@@ -1,0 +1,7 @@
+<li :class="['bubble', mine ? 'mine' : 'theirs']">
+    <div class="bubble-meta">
+        <span class="bubble-name">{{ senderName }}</span>
+        <time class="bubble-time">{{ formattedTimestamp }}</time>
+    </div>
+    <span class="bubble-body">{{ message.value.content }}</span>
+</li>

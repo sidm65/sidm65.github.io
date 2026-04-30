@@ -1,0 +1,67 @@
+<article class="match match-card">
+    <div class="match-top">
+        <strong class="match-title">{{ match.value.sport }} at {{ match.value.location }}</strong>
+        <span class="pill">{{ match.value.ratingType }} {{ match.value.rating }}</span>
+    </div>
+    <p class="host-line">
+        Hosted by
+        <router-link class="inline-link" :to="match.profilePath">{{ match.hostName }}</router-link>
+    </p>
+    <div class="host-badge-row">
+        <router-link class="host-badge" :to="match.profilePath">
+            {{ match.hostName }}
+        </router-link>
+    </div>
+    <div class="meta">
+        <span>{{ match.value.format }}</span>
+        <span>{{ match.value.date }}</span>
+        <span>{{ match.value.time }}</span>
+    </div>
+    <p class="cost">Cost per spot: ${{ match.value.costPerSpot }}</p>
+    <div class="seats">
+        <template v-for="(seat, index) in match.seats" :key="index">
+            <router-link
+                v-if="!seat.open && seat.actor"
+                class="seat-link filled"
+                :to="`/profile/${seat.actor}`"
+            >
+                {{ seat.label }}
+            </router-link>
+            <button
+                v-else
+                :class="{ filled: !seat.open }"
+                :disabled="!seat.open || match.full || match.joined || match.mine"
+                @click="$emit('select-match', match.value.matchId)"
+            >
+                {{ seat.label }}
+            </button>
+        </template>
+    </div>
+    <p v-if="match.mine" class="status">Your match</p>
+    <p v-else-if="match.joined" class="status">Done</p>
+    <p v-else-if="match.full" class="status">Full</p>
+    <div class="match-actions">
+        <router-link
+            v-if="match.canChat"
+            class="button-link secondary-link"
+            :to="match.chatPath"
+        >
+            Match Chat
+        </router-link>
+        <button
+            v-if="match.mine"
+            class="delete-btn"
+            @click="$emit('delete-match', match)"
+            :disabled="deletingMatchId === match.url"
+        >
+            {{ deletingMatchId === match.url ? "Deleting..." : "Delete Match" }}
+        </button>
+        <button
+            v-else-if="pendingMatchId === match.value.matchId && !match.mine"
+            @click="$emit('join-match', match)"
+            :disabled="joiningMatchId === match.value.matchId"
+        >
+            {{ joiningMatchId === match.value.matchId ? "Paying..." : "Pay $" + match.value.costPerSpot }}
+        </button>
+    </div>
+</article>
